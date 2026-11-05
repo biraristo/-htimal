@@ -117,6 +117,15 @@ async function init(){
   el('a').value='TUR';el('b').value='JPN';el('metric').value='SP.DYN.LE00.IN';
   for(const id of ['a','b','metric'])el(id).onchange=plot;
   el('coverage').textContent=fmt(catalog[0].observations)+' WDI gözlemi · '+entries.length+' ülke ve ekonomi · Derleme '+index.date.split('-').reverse().join('.');
-  el('search').oninput=listArchive;listArchive();drawGame();await plot();
+  el('search').oninput=listArchive;listArchive();drawGame();
+  const regional=[
+    ['Türkiye · İllere göre canlı doğumlar','Eurostat, NUTS 3 · Mevcut yıllık kayıtlar.','turkiye-dogumlar.csv','https://ec.europa.eu/eurostat/databrowser/view/demo_r_births/default/table'],
+    ['Nijerya · Eyaletlere göre eğitim','NBS / UNICEF, 2021 MICS · Üç eğitim kademesinde tamamlama oranları. Borno verisi yedi yerel yönetim alanını kapsar.','nijerya-egitim-2021.csv','https://www.unicef.org/nigeria/media/6126/file/2021%20MICS%20Statistical%20Snapshots%20Report.pdf'],
+    ['Japonya · Prefektörlüklere göre nüfus','Statistics Bureau of Japan, Statistical Handbook 2026, Ek 1 · 2024 nüfusu, alan ve yoğunluk.','japonya-prefektorluk-2024.csv','https://www.stat.go.jp/english/data/handbook/pdf/2026all.pdf#page=212']
+  ];
+  for(const [title,desc,file,source] of regional){
+    const card=node('article'),d=node('details');d.append(node('summary',title),node('p',desc),link('CSV indir ↓','bolgeler/'+file),document.createTextNode(' · '),link('Kaynak ↗',source));card.append(d);el('regional').append(card);
+  }
+  await plot();
 }
 init().catch(()=>el('chart').textContent='Veri arşivine erişilemedi. Sayfayı yenileyin.');

@@ -26,6 +26,7 @@ sources = [
  ("gdim.csv","Kuşaklar arası eğitim hareketliliği","GDIM",WB+"0050771/3/DR0065670/GDIM_2023_03.csv","https://datacatalog.worldbank.org/search/dataset/0050771"),
  ("gsap.xlsx","Bölgesel yoksulluk","Global Subnational Poverty Atlas",WB+"0042041/DR0052555/AM26%20-%20GSAP%20data.xlsx","https://datacatalog.worldbank.org/search/dataset/0042041"),
  ("housing.json","Konut giderlerinin yükü","Eurostat",EU+"ilc_lvho07a?sex=T&unit=PC&lang=en","https://ec.europa.eu/eurostat/databrowser/view/ilc_lvho07a/default/table"),
+ ("regionbirths.json","Bölgesel doğumlar · NUTS 3","Eurostat",EU+"demo_r_births?geoLevel=nuts3&sinceTimePeriod=2010&lang=en","https://ec.europa.eu/eurostat/databrowser/view/demo_r_births/default/table"),
  ("time.json","Ücretsiz çalışma ve zaman kullanımı","Eurostat",EU+"tus_20npaywork?lang=en","https://ec.europa.eu/eurostat/databrowser/view/tus_20npaywork/default/table"),
  ("jmp.csv","Su, sanitasyon ve hijyen","WHO / UNICEF JMP","https://api.washdata.org/v1/household/estimates/country?format=csv","https://washdata.org/data/api"),
  ("wpp.csv.gz","Nüfus, doğumlar ve projeksiyonlar","UN DESA · WPP 2024",UN+"WPP2024_Demographic_Indicators_Medium.csv.gz","https://population.un.org/wpp/"),
@@ -60,7 +61,7 @@ def acquire(cache, name, url):
         tmp.replace(path)
     return path
 
-def archive_table(stream, stem, folder, keep=lambda r: True):
+def archive_table(stream, stem, folder, keep=lambda r: True, replacements=None):
     """Write complete CSV rows with headers in bounded, independently usable gzip parts."""
     reader=csv.DictReader(stream)
     writer=None
@@ -68,6 +69,8 @@ def archive_table(stream, stem, folder, keep=lambda r: True):
     count=0
     target=None
     for row in reader:
+        if replacements:
+            row=replacements.get((row.get("LocID"),row.get("Time"),row.get("VarID")),row)
         if not keep(row):
             continue
         if count % 10000 == 0:
@@ -129,9 +132,18 @@ def build(cache, output):
                 atlas["attribution"]={}
                 extend(output,atlas,series)
         elif ".csv" in name:
+            replacements={}
+            if name=="wpp.csv.gz":
+                update_url=UN.replace("CSV_FILES/","")+"WPP2024_CSV_files_update.zip"
+                update=acquire(cache,"togo.zip",update_url)
+                with zipfile.ZipFile(update) as z:
+                    with io.TextIOWrapper(z.open("WPP2024_Demographic_Indicators_Medium_Update.csv"),encoding="utf-8-sig") as corrections:
+                        replacements={(r["LocID"],r["Time"],r["VarID"]):r for r in csv.DictReader(corrections)}
+                item["revision_url"]=update_url
+                item["replacement_rows"]=len(replacements)
             opener=gzip.open if name.endswith(".gz") else open
             with opener(path,"rt",encoding="utf-8-sig",newline="") as f:
-                item["files"],item["rows"]=archive_table(f,name.split(".")[0],archive)
+                item["files"],item["rows"]=archive_table(f,name.split(".")[0],archive,replacements=replacements)
             if not item["rows"]:
                 raise ValueError("Empty table "+name)
         else:
@@ -161,4 +173,10 @@ if __name__=="__main__":
         dest=PUBLIC/"data"
         if dest.exists():
             dest.rename(Path(tmp)/"old")
-        out.rename(dest)
+        try:
+            out.rename(dest)
+        except OSError:
+            old=Path(tmp)/"old"
+            if old.exists():
+                old.rename(dest)
+            raise

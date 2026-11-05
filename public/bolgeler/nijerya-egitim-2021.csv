@@ -1,0 +1,39 @@
+state_or_national,primary_completion_pct,lower_secondary_completion_pct,upper_secondary_completion_pct
+National,73,68,54
+Abia,94,93,76
+Adamawa,73,59,47
+Akwa Ibom,94,84,67
+Anambra,99,94,90
+Bauchi,30,25,17
+Bayelsa,86,86,75
+Benue,74,70,45
+Borno (7 LGAs),51,48,37
+Cross River,93,82,60
+Delta,92,88,69
+Ebonyi,96,92,87
+Edo,90,86,78
+Ekiti,95,91,71
+Enugu,95,88,73
+Gombe,50,49,37
+Imo,98,89,83
+Jigawa,38,31,19
+Kaduna,71,60,49
+Kano,69,64,49
+Katsina,63,47,32
+Kebbi,40,32,24
+Kogi,84,78,63
+Kwara,81,71,66
+Lagos,98,89,85
+Nasarawa,69,62,47
+Niger,59,59,50
+Ogun,86,80,62
+Ondo,91,87,73
+Osun,92,84,72
+Oyo,91,82,64
+Plateau,79,70,51
+Rivers,96,93,76
+Sokoto,36,33,22
+Taraba,63,58,38
+Yobe,40,40,31
+Zamfara,45,43,36
+FCT,91,86,67

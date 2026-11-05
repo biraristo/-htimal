@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'scripts/collect.py'
+      - 'scripts/*.py'
       - '.github/workflows/atlas.yml'
 permissions:
   contents: write
