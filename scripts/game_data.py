@@ -38,7 +38,8 @@ for metric,field in [("IT.NET.USER.ZS","internet"),("EG.ELC.ACCS.ZS","electricit
             year=max(years)
             world[code][field]=[int(year),series[year]]
 with (ROOT/"bolgeler"/"turkiye-dogumlar.csv").open() as stream:
-    world["TUR"]["provinces"]={r["label"]:int(r["live_births"]) for r in csv.DictReader(stream) if r["year"]=="2023"}
+    world["TUR"]["provinces"]={r["label"]:int(r["live_births"]) for r in csv.DictReader(stream) if r["year"]=="2022"}
+assert len(world["TUR"]["provinces"])==81, "Incomplete provincial birth coverage"
 countries={k:v for k,v in world.items() if set(v["life"])=={"1","2"}}
 assert len(countries)>200 and all(c['life']['1'][0][0]==0 for c in countries.values())
 (ROOT/"world.json").write_text(json.dumps(countries,ensure_ascii=False,separators=(",",":")))
