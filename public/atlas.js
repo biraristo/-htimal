@@ -8,7 +8,7 @@ function country(code) {
   const iso = index.iso2?.[code];
   return localNames[code] || (iso && /^[A-Z]{2}$/.test(iso) ? names.of(iso) : index.countries[code]) || code;
 }
-let index, catalog, births, plotVersion = 0;
+let index, catalog, plotVersion = 0;
 const cache = new Map();
 async function json(path) {
   const response = await fetch(path);
@@ -81,29 +81,8 @@ function listArchive() {
     card.append(d);out.append(card);
   }
 }
-const stages=[
-  ['7 yaş','Okuldan sonra bir saatin var.','Bir arkadaşınla oku','Mahallende oyun oyna','Birlikte okuduğun arkadaşınla kitap değişmeye başladın.','Mahallede düzenli buluştuğun bir arkadaş grubu oluştu.'],
-  ['17 yaş','Hafta sonu için iki teklif aldın.','Atölyeye katıl','Bir işte çalış','Atölyede ilk tasarımını tamamladın.','İlk kazancının bir bölümünü yol masrafın için ayırdın.'],
-  ['22 yaş','Başka bir şehirde altı haftalık staj buldun.','Staja git','Yaşadığın yerde devam et','Yeni bir şehirde işe gidip gelmenin ve ev paylaşmanın nasıl olduğunu öğrendin.','Yakın çevrende çalışarak bir sonraki adımına hazırlandın.']
-];
-const saveKey='ihtimal-life-v1';
-let game=null;
-try{const saved=JSON.parse(localStorage.getItem(saveKey));if(saved&&['TUR','JPN','NGA'].includes(saved.id)&&Array.isArray(saved.choices)&&saved.choices.length<=3&&saved.choices.every(x=>x===0||x===1))game=saved;}catch{}
-function drawGame(){
-  const root=el('game');root.replaceChildren();
-  const button=(label,fn)=>{const b=node('button',label);b.onclick=fn;root.append(b);return b;};
-  const persist=()=>{try{localStorage.setItem(saveKey,JSON.stringify(game));}catch{}drawGame();};
-  const start=()=>{const entries=Object.entries(births);let t=Math.random()*entries.reduce((sum,p)=>sum+p[1],0);let id=entries.at(-1)[0];for(const [k,n] of entries){if((t-=n)<0){id=k;break;}}game={id,choices:[]};persist();};
-  if(!game){root.append(node('h3','Nerede doğardın?'),node('p','Türkiye, Japonya ve Nijerya arasında 2023 doğum sayılarına göre bir yer seçilir. Ardından üç karar verirsin.'));button('Bir hayata başla →',start).className='play';return;}
-  const step=game.choices.length;
-  root.append(node('small',country(game.id)+' · '+(step===3?'25 yaş':stages[step][0])));
-  if(step){const prev=stages[step-1];root.append(node('p',prev[4+game.choices[step-1]]));}
-  if(step===3){root.append(node('h3','İlk 25 yılın'),node('p',game.choices.map((c,i)=>stages[i][2+c]).join(' → ')));button('Başka bir hayat yaşa',start);}
-  else {const s=stages[step];root.append(node('h3',s[1]));[0,1].forEach(i=>button(s[2+i],()=>{game.choices.push(i);persist();}));}
-  root.append(node('p','Doğum çekilişi BM WPP 2024 verisine dayanır. Üç karar ve sonuçları bu prototip için yazılmış kurgudur.','note'));
-}
 async function init(){
-  [index,catalog,births]=await Promise.all([json('data/index.json'),json('data/catalog.json'),json('births.json')]);
+  [index,catalog]=await Promise.all([json('data/index.json'),json('data/catalog.json')]);
   const entries=Object.keys(index.countries).sort((x,y)=>country(x).localeCompare(country(y),'tr'));
   for(const id of ['a','b'])entries.forEach(code=>el(id).add(option(code,country(code))));
   const populateMetrics=()=>{
@@ -117,7 +96,7 @@ async function init(){
   el('a').value='TUR';el('b').value='JPN';el('metric').value='SP.DYN.LE00.IN';
   for(const id of ['a','b','metric'])el(id).onchange=plot;
   el('coverage').textContent=fmt(catalog[0].observations)+' WDI gözlemi · '+entries.length+' ülke ve ekonomi · Derleme '+index.date.split('-').reverse().join('.');
-  el('search').oninput=listArchive;listArchive();drawGame();
+  el('search').oninput=listArchive;listArchive();
   const regional=[
     ['Türkiye · İllere göre canlı doğumlar','Eurostat, NUTS 3 · Mevcut yıllık kayıtlar.','turkiye-dogumlar.csv','https://ec.europa.eu/eurostat/databrowser/view/demo_r_births/default/table'],
     ['Nijerya · Eyaletlere göre eğitim','NBS / UNICEF, 2021 MICS · Üç eğitim kademesinde tamamlama oranları. Borno verisi yedi yerel yönetim alanını kapsar.','nijerya-egitim-2021.csv','https://www.unicef.org/nigeria/media/6126/file/2021%20MICS%20Statistical%20Snapshots%20Report.pdf'],
