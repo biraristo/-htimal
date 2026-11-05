@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from explorer import extend
 from datetime import date
 from pathlib import Path
 
@@ -99,6 +100,7 @@ def build(cache, output):
                 series={r["Series Code"]:r for r in csv.DictReader(table("WDISeries.csv")) if r["License Type"] in {"CC BY-4.0","CC BY 3.0 IGO"}}
                 countries={r["Country Code"]:r["Short Name"] for r in csv.DictReader(table("WDICountry.csv")) if r["Region"]}
                 atlas["countries"]=countries
+                atlas["iso2"]={r["Country Code"]:r["2-alpha code"] for r in csv.DictReader(table("WDICountry.csv")) if r["Region"]}
                 for filename,key in [("WDISeries.csv","Series Code"),("WDICountry.csv",None),("WDIfootnote.csv","SeriesCode"),("WDIcountry-series.csv","SeriesCode"),("WDIseries-time.csv","SeriesCode")]:
                     stream=table(filename)
                     header=next(csv.reader(table(filename)))
@@ -119,13 +121,13 @@ def build(cache, output):
                     total+=len(values)
                     if values:
                         seen.add(code)
-                    if code in featured and country in countries and values:
-                        atlas["series"].setdefault(code,{})[country]={y:float(v) for y,v in values.items()}
+
                     return bool(values)
                 files,count=archive_table(table("WDICSV.csv"),"wdi",archive,include)
                 item.update(rows=count,observations=total,indicators=len(seen))
                 item["files"]=files+item["files"]
-                atlas["attribution"]={c:series[c]["Source"] for c in featured if c in series}
+                atlas["attribution"]={}
+                extend(output,atlas,series)
         elif ".csv" in name:
             opener=gzip.open if name.endswith(".gz") else open
             with opener(path,"rt",encoding="utf-8-sig",newline="") as f:
